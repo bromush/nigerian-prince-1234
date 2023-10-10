@@ -23,8 +23,8 @@ const client = new Client({
   ],
   allowedMentions: { parse: ["users", "roles"] },
 });
-require("replit-dis-uniter")(client);
-const fetch = require("node-fetch");
+const keepAlive = require('./server.js');
+const fetch = require("@replit/node-fetch");
 const rest = new REST().setToken(process.env.BOT_TOKEN);
 
 client.on("ready", () => {
@@ -32,10 +32,16 @@ client.on("ready", () => {
     activities: [{ name: "/help" }],
     status: "online",
   });
+  console.log(`Logged in as ${client.user.tag}`)
 });
 // 3276799
 for (const e of ["unhandledRejection", "rejectionHandled", "uncaughtException"])
-  process.on(e, (error) => {
+  process.on(e, (error, promise) => {
+    promise.catch((err) => {
+      if (err.status === 429) {
+        exec("kill 1");
+      }
+    })
     console.error(error);
   });
 
@@ -1438,4 +1444,5 @@ client.on("guildMemberRemove", (member) => {
   });
 });
 
+keepAlive();
 client.login(process.env.BOT_TOKEN);
