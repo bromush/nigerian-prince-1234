@@ -1,3 +1,14 @@
+const express = require("express")
+const app = express()
+
+app.get("/", (req, res) => {
+    res.send(`John 3:16 "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.`)
+})
+
+app.listen(3000, () => {
+    console.log(`Express running`)
+})
+
 const {
   Client,
   GatewayIntentBits,
@@ -21,9 +32,11 @@ const client = new Client({
     GatewayIntentBits.DirectMessages,
     GatewayIntentBits.GuildInvites,
   ],
-  allowedMentions: { parse: ["users", "roles"] },
+  allowedMentions: { 
+    parse: ["roles", "users"],
+    repliedUser: false,
+  },
 });
-const keepAlive = require('./server.js');
 const fetch = require("@replit/node-fetch");
 const rest = new REST().setToken(process.env.BOT_TOKEN);
 
@@ -35,15 +48,22 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}`)
 });
 // 3276799
-for (const e of ["unhandledRejection", "rejectionHandled", "uncaughtException"])
-  process.on(e, (error, promise) => {
-    promise.catch((err) => {
-      if (err.status === 429) {
-        exec("kill 1");
-      }
-    })
+
+for (const e of ["rejectionHandled", "uncaughtException"])
+process.on(e, (error) => {
     console.error(error);
-  });
+});
+
+process.on("unhandledRejection", (error, promise) => {
+ promise.catch((error) => {            
+  if (error.status === 429) { 
+      process.kill(1);                 
+      } else {
+    console.log(error);
+      }
+   })
+});
+
 
 const commands = [
   {
@@ -55,7 +75,7 @@ const commands = [
 (async () => {
   try {
     await rest
-      .put(Routes.applicationCommands("840331113104801825"), { body: commands })
+.put(Routes.applicationCommands("840331113104801825"), { body: commands })
       .then(() =>
         console.log("Successfully registered application (/) commands.")
       );
@@ -214,18 +234,8 @@ client.on("messageCreate", async (message) => {
   const args = message.content.split(" ");
   const emojie = "<:error:1019018432315920484>";
   if (message.author.bot || !message.guild) return;
-  if (message.content === "$edgarisnoskill") {
-    try {
-      message.guild.members.unban(`763907719307722762`);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  if (message.content === "$joke") {
-    const joke = await fetch(
-      "https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,explicit"
-    );
-    const jokeJSON = await joke.json();
+  if (args[0].toLowerCase() === "$joke") {
+    const jokeJSON = await (await fetch("https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,explicit")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -237,32 +247,33 @@ client.on("messageCreate", async (message) => {
       ],
     });
   }
-  if (message.content === "$quote") {
-    const quote = await fetch("https://zenquotes.io/api/random/");
-    const quoteJSON = await quote.json();
+  if (args[0].toLowerCase() === "$quote") {
+    const quoteJSON = await (await fetch("https://zenquotes.io/api/random/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
           .addFields({
-            name: `*"${quoteJSON[0].q}"*`,
-            value: `- ${quoteJSON[0].a}`,
+            name: `"${quoteJSON[0].q}"`,
+            value: `${quoteJSON[0].a}`,
           })
           .setColor('#2c2d31'),
       ],
     });
   }
-  if (message.content === "$jesus") {
-    return message.reply(
-      {
-        embeds: [
-          new EmbedBuilder()
-            .setImage(`https://media.giphy.com/media/yNF0XKi2ZLuow/giphy.gif`)
-            .setColor('#2c2d31'),
-        ],
-      }
-    );
+  if (args[0].toLowerCase() === "$bible") {
+    const bibleJSON = await (await fetch("https://labs.bible.org/api/?passage=random&type=json")).json();
+    return message.reply({
+      embeds: [
+        new EmbedBuilder()
+          .addFields({
+            name: `${bibleJSON[0].bookname} ${bibleJSON[0].chapter}:${bibleJSON[0].verse}`,
+            value: `"${bibleJSON[0].text}"`,
+          })
+          .setColor('#2c2d31'),
+      ],
+    });
   }
-  if (message.content.startsWith("$suggest")) {
+  if(args[0].toLowerCase() === "$suggest") {
     if (!args[1])
       return message.reply({
         embeds: [
@@ -271,15 +282,14 @@ client.on("messageCreate", async (message) => {
             .setColor('#2c2d31'),
         ],
       });
-    const user_suggestion = args.slice(1).join(" ");
     message.reply({
       embeds: [
         new EmbedBuilder()
           .setDescription("Your suggestion has been sent")
           .setColor('#2c2d31'),
       ],
-    }) &&
-      client.channels.cache.get("838994640866639922").send({
+    })
+      client.channels.cache.get("1145359462639607828").send({
         embeds: [
           new EmbedBuilder()
             .setAuthor({
@@ -290,8 +300,8 @@ client.on("messageCreate", async (message) => {
             })
             .setColor('#2c2d31')
             .addFields(
-              { name: `Suggestion:`, value: `${user_suggestion}` },
-              { name: `User ID:`, value: ` ${message.author.id}` }
+              { name: `Suggestion:`, value: `${args.slice(1).join(" ")}` },
+              { name: `User ID:`, value: `${message.author.id}` }
             ),
         ],
       });
@@ -306,16 +316,13 @@ client.on("messageCreate", async (message) => {
         ],
       });
     let replies = ["Yes.", "No.", "I don't know."];
-
-    let result = Math.floor(Math.random() * replies.length);
-    let question = args.slice(1).join(" ");
     message.reply({
       embeds: [
         new EmbedBuilder()
           .setColor('#2c2d31')
           .addFields(
-            { name: "Question", value: question },
-            { name: "Answer", value: replies[result] }
+            { name: "Question", value: `${args.slice(1).join(" ")}` },
+            { name: "Answer", value: replies[(Math.floor(Math.random() * Math.floor(replies.length)))] }
           ),
       ],
     });
@@ -323,10 +330,9 @@ client.on("messageCreate", async (message) => {
   if (message.content.startsWith("$hug")) {
     let user =
       message.mentions.users.first() ||
-      message.guild.members.cache.get(args[1]) ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
       client.user;
-    const hug = await fetch("https://kawaii.red/api/gif/hug/token=anonymous/");
-    const hugJSON = await hug.json();
+    const hugJSON = await (await fetch("https://kawaii.red/api/gif/hug/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -339,10 +345,9 @@ client.on("messageCreate", async (message) => {
   if (message.content.startsWith("$punch")) {
     let user =
       message.mentions.users.first() ||
-      message.guild.members.cache.get(args[1]) ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
       client.user;
-    const hug = await fetch("https://kawaii.red/api/gif/punch/token=anonymous/");
-    const hugJSON = await hug.json();
+    const hugJSON = await (await fetch("https://kawaii.red/api/gif/punch/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -353,11 +358,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$kill")) {
-    let user = message.mentions.users.first() || client.user;
-    const kill = await fetch(
-      "https://kawaii.red/api/gif/kill/token=anonymous/"
-    );
-    const killJSON = await kill.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const killJSON = await (await fetch("https://kawaii.red/api/gif/kill/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -368,11 +373,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$kiss")) {
-    let user = message.mentions.users.first() || client.user;
-    const kiss = await fetch(
-      "https://kawaii.red/api/gif/kiss/token=anonymous/"
-    );
-    const kissJSON = await kiss.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const kissJSON = await (await fetch("https://kawaii.red/api/gif/kiss/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -383,11 +388,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$slap")) {
-    let user = message.mentions.users.first() || client.user;
-    const slap = await fetch(
-      "https://kawaii.red/api/gif/slap/token=anonymous/"
-    );
-    const slapJSON = await slap.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const slapJSON = await (await fetch("https://kawaii.red/api/gif/slap/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -398,11 +403,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$bite")) {
-    let user = message.mentions.users.first() || client.user;
-    const bite = await fetch(
-      "https://kawaii.red/api/gif/bite/token=anonymous/"
-    );
-    const biteJSON = await bite.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const biteJSON = await (await fetch("https://kawaii.red/api/gif/bite/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -413,11 +418,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$blush")) {
-    let user = message.mentions.users.first() || client.user;
-    const blush = await fetch(
-      "https://kawaii.red/api/gif/blush/token=anonymous/"
-    );
-    const blushJSON = await blush.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const blushJSON = await (await fetch("https://kawaii.red/api/gif/blush/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -428,11 +433,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$yeet")) {
-    let user = message.mentions.users.first() || client.user;
-    const yeet = await fetch(
-      "https://kawaii.red/api/gif/yeet/token=anonymous/"
-    );
-    const yeetJSON = await yeet.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const yeetJSON = await (await fetch("https://kawaii.red/api/gif/yeet/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -443,10 +448,7 @@ client.on("messageCreate", async (message) => {
     });
   }
     if (message.content.startsWith("$die")) {
-    const die = await fetch(
-      "https://kawaii.red/api/gif/die/token=anonymous/"
-    );
-    const dieJSON = await die.json();
+    const dieJSON = await (await fetch("https://kawaii.red/api/gif/die/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -457,11 +459,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$cuddle")) {
-    let user = message.mentions.users.first() || client.user;
-    const cuddle = await fetch(
-      "https://kawaii.red/api/gif/cuddle/token=anonymous/"
-    );
-    const cuddleJSON = await cuddle.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const cuddleJSON = await (await fetch("https://kawaii.red/api/gif/cuddle/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -472,9 +474,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$pat")) {
-    let user = message.mentions.users.first() || client.user;
-    const pat = await fetch("https://kawaii.red/api/gif/pat/token=anonymous/");
-    const patJSON = await pat.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const patJSON = await (await fetch("https://kawaii.red/api/gif/pat/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -485,11 +489,11 @@ client.on("messageCreate", async (message) => {
     });
   }
   if (message.content.startsWith("$highfive")) {
-    let user = message.mentions.users.first() || client.user;
-    const highfive = await fetch(
-      "https://kawaii.red/api/gif/highfive/token=anonymous/"
-    );
-    const highfiveJSON = await highfive.json();
+    let user =
+      message.mentions.users.first() ||
+      (await client.users.fetch(args[1]).catch(() => null)) ||
+      client.user;
+    const highfiveJSON = await (await fetch("https://kawaii.red/api/gif/highfive/token=anonymous/")).json();
     return message.reply({
       embeds: [
         new EmbedBuilder()
@@ -513,7 +517,7 @@ client.on("messageCreate", async (message) => {
       });
   }
   if (message.content.startsWith("$firstmessage")) {
-    let fetchchannel = message.mentions.channels.first() || message.channel;
+    let fetchchannel = message.mentions.channels.first() ||  message.guild.channels.cache.get(args[1]) || message.channel;
     if (
       !fetchchannel
         .permissionsFor(client.user)
@@ -532,7 +536,7 @@ client.on("messageCreate", async (message) => {
       after: 1,
       limit: 1,
     });
-    const firstmsg = fetchMessages.first();
+    const firstmsg = await fetchMessages.first();
     message.reply({
       embeds: [
         new EmbedBuilder()
@@ -603,8 +607,7 @@ client.on("messageCreate", async (message) => {
   }
   if (message.content.startsWith("$avatar")) {
     let user =
-message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() => null)) ||
-      message.author;
+message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() => null)) || message.author;
     if (!user) {
       return message.reply({
         embeds: [
@@ -625,7 +628,9 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
   }
   if (message.content === "$meme") {
     const response = await fetch("https://reddit.com/r/memes/random/.json");
+    console.log(response);
     const list = await response.json();
+    consoel.log(list);
     const post = list[0].data.children[0];
     message.reply({
       embeds: [
@@ -700,7 +705,6 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
     });
   }
   if (args[0].toLowerCase() === `$userinfo`) {
-    console.log(args[1])
     let umember =
       message.mentions.members.first() || message.guild.members.cache.get(args[1]) ||
       message.member;
@@ -739,7 +743,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
       ],
     });
   }
-  if (message.content === "$serverinfo") {
+  if(message.content === "$serverinfo") {
     message.reply({
       embeds: [
         new EmbedBuilder()
@@ -783,7 +787,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
       ],
     });
   }
-  if (args[0].toLowerCase() === "$nickname") {
+  if(args[0].toLowerCase() === "$nickname") {
     if (
       !message.member.permissions.has(
         PermissionsBitField.Flags.ManageNicknames
@@ -812,10 +816,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
         ],
       });
     }
-
-    let nickuser =
-      message.mentions.members.first() || (await message.guild.members.fetch(args[1]).catch(() => null));
-
+    let nickuser = message.mentions.members.first() || (await message.guild.members.fetch(args[1]).catch(() => null));
     if (!nickuser) {
       return message.reply({
         embeds: [
@@ -855,8 +856,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
     if (message.guild.id != "764936103903887420") return;
     if (
       !message.member.permissions.has(
-        PermissionsBitField.Flags.ManageRoles
-                                     )
+        PermissionsBitField.Flags.ManageRoles)
     ) {
       return message.reply({
         embeds: [
@@ -866,10 +866,9 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
         ],
       });
     }
-
-    let pm = message.mentions.members.first() || (await message.guild.members.fetch(args[1]).catch(() => null));
+    let pm = message.mentions.members.first() || (await 
+    message.guild.members.fetch(args[1]).catch(() => null));
     const pmRole = await message.guild.roles.fetch("934476243934535730");
-
     if (!pm) {
       return message.reply({
         embeds: [
@@ -879,7 +878,6 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
         ],
       });
     }
-
     try {
       pm.roles.add(pmRole);
       return message.reply({
@@ -926,9 +924,8 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
     }
     let imember =
       message.mentions.members.first() ||
-      message.guild.members.cache.get(args[1]) ||
+      (await message.guild.members.fetch(args[1]).catch(() => null)) ||
       message.member;
-
     if (!imember) {
       return message.reply({
         embeds: [
@@ -938,7 +935,6 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
         ],
       });
     }
-
     const invites = await message.guild.invites.fetch();
     let amount = 0;
     invites.forEach((invite) => {
@@ -979,7 +975,9 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
         ],
       });
     }
-    if (!message.mentions.roles.first())
+    const rrole = message.mentions.roles.first() || (await message.guild.roles.fetch(args[1]).catch(() => null));
+    const rmember = message.mentions.members.first() (await message.guild.members.fetch(args[2]).catch(() => null)) || message.author;
+    if (!rrole) {
       return message.reply({
         embeds: [
           new EmbedBuilder()
@@ -987,8 +985,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
             .setColor('#2c2d31'),
         ],
       });
-    const rrole = message.mentions.roles.first();
-    const rmember = message.mentions.members.first() || message.author;
+    }
     if (
       rrole.position >= message.member.roles.highest.position ||
       rrole.position >=
@@ -1052,8 +1049,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
     }
     let kickMember =
       message.mentions.members.first() ||
-      message.guild.members.cache.get(args[1]);
-
+      (await message.guild.members.fetch(args[1]).catch(() => null));
     if (!kickMember) {
       return message.reply({
         embeds: [
@@ -1082,7 +1078,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
     kickMember.kick(`Kicked by: ${message.author.tag}`);
     message.reply({ embeds: [kickembed] });
   }
-  if (args[0].toLowerCase() === `$ban`) {
+  if(args[0].toLowerCase() === `$ban`) {
     if (
       !message.member.permissions.has(PermissionsBitField.Flags.BanMembers)
     ) {
@@ -1110,9 +1106,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
       });
     }
     let banMember =
-      message.mentions.members.first() ||
-      message.guild.members.cache.get(args[1]);
-
+    message.mentions.members.first() || (await message.guild.members.fetch(args[1]).catch(() => null));
     if (!banMember) {
       return message.reply({
         embeds: [
@@ -1122,7 +1116,6 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
         ],
       });
     }
-
     if (
       banMember.roles.highest.position >=
         message.member.roles.highest.position ||
@@ -1136,13 +1129,15 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
             .setColor('#2c2d31'),
         ],
       });
-    let banembed = new EmbedBuilder()
-      .setColor('#2c2d31')
-      .setDescription(`${banMember} was banned by ${message.author}`);
     banMember.ban({ reason: `Banned by: ${message.author.tag}` });
-    message.reply({ embeds: [banembed] });
+    message.reply({ 
+      embeds: [
+        new EmbedBuilder()
+        .setColor('#2c2d31')
+        .setDescription(`${banMember} was banned by ${message.author}`),
+      ],
+      })
   }
-
   if (args[0].toLowerCase() === `$unban`) {
     if (
       !message.member.permissions.has(PermissionsBitField.Flags.BanMembers)
@@ -1227,7 +1222,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
       });
     let timeoutMember =
       message.mentions.members.first() ||
-      message.guild.members.cache.get(args[1]);
+      (await message.guild.members.fetch(args[1]).catch(() => null));
     if (!timeoutMember) {
       return message.reply({
         embeds: [
@@ -1412,37 +1407,43 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
 });
 
 client.on("guildMemberAdd", (member) => {
-  if (member.guild.id !== "764936103903887420") return;
+  if (member.guild.id === "764936103903887420") {
 client.channels.cache.get("838993303982309387").send(`<@${member.id}>`).then((message) => {
-      setTimeout(() => message.delete(), 100);
-    }) && 
-client.channels.cache.get("1142628919871291514").send(`<@${member.id}>`)
-    .then((message) => {
-      setTimeout(() => message.delete(), 100);
-    });
+    setTimeout(() => message.delete(), 500)});
+client.channels.cache.get("1167283907666923521").send(`<@${member.id}>`).then((message) => {
+    setTimeout(() => message.delete(), 500)});
+  }
 });
 
 client.on("guildMemberRemove", (member) => {
-  if (member.guild.id !== "764936103903887420") return;
-  if (!member.roles.cache.has(`934476243934535730`)) return;
-  client.channels.cache.get("1013989739671584959").send({
+if (member.guild.id === "764936103903887420") {
+if (member.roles.cache.has(`934476243934535730`)) {
+ client.channels.cache.get("1013989739671584959").send({
     embeds: [
       new EmbedBuilder()
         .setTitle(`Partner Manager Left`)
         .addFields(
-          { name: `PM:`, value: `<@${member.id}>` },
+          { name: `User:`, value: `<@${member.id}>` },
           { name: `Username:`, value: `${member.user.tag}` },
           { name: `ID`, value: `${member.id}` },
-          {
-            name: "Joined On:",
-            value: `<t:${new Date(member.joinedAt / 1000).getTime()}:f>`,
+          { name: "Joined On:", value: `<t:${new Date(member.joinedAt / 1000).getTime()}:f>`,
           }
         )
-
         .setColor('#2c2d31'),
     ],
   });
+  }
+}
 });
 
-keepAlive();
 client.login(process.env.BOT_TOKEN);
+
+// module.exports = client;
+
+// auto kill
+// setInterval(() => {
+//   if (!client) {
+//      console.log("Rate limit assumed, restarting")
+//      process.kill(1)
+//     }
+// }, 5000)

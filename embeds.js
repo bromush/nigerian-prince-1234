@@ -7,7 +7,7 @@ const fun = new EmbedBuilder()
     { name: "`food`", value: "view food on reddit" },
     { name: "`tifu`", value: "view stories from r/tifu" },
     { name: "`8ball`", value: "ask the magic 8ball a question" },
-    { name: "`jesus`", value: "view a picture of Jesus" },
+    { name: "`bible`", value: "sends a quote from the Bible" },
     { name: "`confession`", value: "view confessions from r/confessions" },
     { name: "`joke`", value: "sends a joke" },
     { name: "`quote`", value: "sends a quote" },
@@ -26,7 +26,7 @@ const utility = new EmbedBuilder()
     { name: "`firstmessage`", value: "view the firstmessage in a channel`" },
     { name: "`avatar`", value: "view a users avatar" },
     { name: "`support`", value: "get support for Bromu" },
-    { name: "`suggest`", value: "suggest an implication for Bromu" },
+    { name: "`suggest`", value: "suggest an idea for Bromu" },
     { name: "`invites`", value: "view a users invites" }
   )
   .setColor("#2c2d31")
