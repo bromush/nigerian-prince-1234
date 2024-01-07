@@ -1,6 +1,7 @@
-const express = require("express")
-const app = express()
+import 'dotenv/config'
 
+import express from 'express';
+const app = express()
 app.get("/", (req, res) => {
     res.send(`John 3:16 "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.`)
 })
@@ -9,7 +10,8 @@ app.listen(3000, () => {
     console.log(`Express running`)
 })
 
-const {
+
+import {
   Client,
   GatewayIntentBits,
   StringSelectMenuBuilder,
@@ -22,7 +24,7 @@ const {
   REST,
   ButtonStyle,
   Routes,
-} = require("discord.js");
+} from "discord.js";
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -37,7 +39,7 @@ const client = new Client({
     repliedUser: false,
   },
 });
-const fetch = require("@replit/node-fetch");
+import fetch from 'node-fetch';
 const rest = new REST().setToken(process.env.BOT_TOKEN);
 
 client.on("ready", () => {
@@ -49,21 +51,10 @@ client.on("ready", () => {
 });
 // 3276799
 
-for (const e of ["rejectionHandled", "uncaughtException"])
+for (const e of ["rejectionHandled", "unhandledRejection", "uncaughtException"])
 process.on(e, (error) => {
     console.error(error);
 });
-
-process.on("unhandledRejection", (error, promise) => {
- promise.catch((error) => {            
-  if (error.status === 429) { 
-      process.kill(1);                 
-      } else {
-    console.log(error);
-      }
-   })
-});
-
 
 const commands = [
   {
@@ -628,9 +619,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
   }
   if (message.content === "$meme") {
     const response = await fetch("https://reddit.com/r/memes/random/.json");
-    console.log(response);
     const list = await response.json();
-    consoel.log(list);
     const post = list[0].data.children[0];
     message.reply({
       embeds: [
@@ -1437,13 +1426,3 @@ if (member.roles.cache.has(`934476243934535730`)) {
 });
 
 client.login(process.env.BOT_TOKEN);
-
-// module.exports = client;
-
-// auto kill
-// setInterval(() => {
-//   if (!client) {
-//      console.log("Rate limit assumed, restarting")
-//      process.kill(1)
-//     }
-// }, 5000)
