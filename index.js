@@ -618,9 +618,10 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
     });
   }
   if (message.content === "$meme") {
-    const response = await fetch("https://reddit.com/r/memes/random/.json");
-    const list = await response.json();
-    const post = list[0].data.children[0];
+    const response = await (await fetch('https://reddit.com/r/memes/random/.json', { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0' }
+  })).te
+  console.log(response)
+    const post = response[0].data.children[0];
     message.reply({
       embeds: [
         new EmbedBuilder()
@@ -630,7 +631,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
           .setImage(post.data.url),
       ],
     });
-  }
+    }
   if (message.content === "$confession") {
     const response = await fetch(
       "https://reddit.com/r/confessions/random/.json"
