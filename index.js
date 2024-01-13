@@ -77,7 +77,7 @@ const commands = [
 
 client.on("interactionCreate", async (interaction) => {
 if(interaction.isStringSelectMenu()){
-  const { fun, utility, moderation, roleplay } = require("./embeds.js");
+import { fun, utility, moderation, roleplay } from "./embeds.js";
   if (interaction.customId === "help") {
     switch (interaction.values[0]) {
       case "first":
