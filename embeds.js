@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require("discord.js");
+import { EmbedBuilder } from "discord.js";
 
 const fun = new EmbedBuilder()
   .setTitle(`Fun Commands:`)
@@ -71,4 +71,4 @@ const roleplay = new EmbedBuilder()
     "https://images-ext-1.discordapp.net/external/NJE-NdpHvwRoicts4seqeltn-70PAqpQUBBss1u8GfE/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/840331113104801825/5aea8ac98e2b884a7ac71dd31f4bfc80.png"
   );
 
-module.exports = { fun, utility, moderation, roleplay };
+export { fun, utility, moderation, roleplay };

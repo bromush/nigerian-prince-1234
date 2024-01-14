@@ -40,6 +40,7 @@ const client = new Client({
   },
 });
 import fetch from 'node-fetch';
+import { fun, utility, moderation, roleplay } from "./embeds.js";
 const rest = new REST().setToken(process.env.BOT_TOKEN);
 
 client.on("ready", () => {
@@ -77,7 +78,6 @@ const commands = [
 
 client.on("interactionCreate", async (interaction) => {
 if(interaction.isStringSelectMenu()){
-import { fun, utility, moderation, roleplay } from "./embeds.js"
   if (interaction.customId === "help") {
     switch (interaction.values[0]) {
       case "first":
