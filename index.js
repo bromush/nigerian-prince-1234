@@ -1400,9 +1400,6 @@ client.on("guildMemberAdd", (member) => {
   if (member.guild.id === "764936103903887420") {
 client.channels.cache.get("838993303982309387").send(`<@${member.id}>`).then((message) => {
     setTimeout(() => message.delete(), 500)});
-client.channels.cache.get("1167283907666923521").send(`<@${member.id}>`).then((message) => {
-    setTimeout(() => message.delete(), 500)});
-  }
 });
 
 client.on("guildMemberRemove", (member) => {
