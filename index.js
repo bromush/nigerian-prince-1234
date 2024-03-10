@@ -846,7 +846,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
     if (message.guild.id != "764936103903887420") return;
     if (
       !message.member.permissions.has(
-        PermissionsBitField.Flags.ManageRoles) || !message.member.roles.cache.has(`980155860284244008`)
+        PermissionsBitField.Flags.ManageRoles) && !message.member.roles.cache.has(`980155860284244008`)
     ) {
       return message.reply({
         embeds: [
