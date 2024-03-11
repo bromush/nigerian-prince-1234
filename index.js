@@ -913,9 +913,7 @@ message.mentions.users.first() || (await client.users.fetch(args[1]).catch(() =>
       });
     }
     let imember =
-      message.mentions.members.first() ||
-      (await message.guild.members.fetch(args[1]).catch(() => null)) ||
-      message.member;
+      message.mentions.members.first() || message.guild.members.cache.get(args[1]) || message.member
     if (!imember) {
       return message.reply({
         embeds: [
